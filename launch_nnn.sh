@@ -6,3 +6,5 @@ fi
 
 # Call the quitcd bash function 
 n
+
+# This is just a sort of wrapper, to use with dwm

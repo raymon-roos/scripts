@@ -7,3 +7,5 @@ if xrandr | grep "$extern disconnected"; then
 else
 	xrandr --output "$intern" --primary --auto --output "$extern" --mode 1280x1024 --left-of "$intern" 
 fi
+
+# For use with my monitors at home
