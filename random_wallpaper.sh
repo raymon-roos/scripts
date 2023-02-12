@@ -6,4 +6,4 @@ bgLeft=$(find "$HOME"/files/pictures/wallpapers/1280x1024/ -type f | shuf -n 1)
 bgRight=$(find "$HOME"/files/pictures/wallpapers/1280x1024/ -type f | shuf -n 1)
 
 # Feed images to bgs
-/usr/local/bin/bgs $bgLeft $bgMain $bgRight &
+/usr/local/bin/bgs "$bgLeft" "$bgMain" "$bgRight" &
