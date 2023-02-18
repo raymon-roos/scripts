@@ -26,5 +26,5 @@ gpg_is_cached=$(gpg-connect-agent 'keyinfo --list' /bye 2>/dev/null | awk '{if($
 if [[ $gpg_is_cached == 1 ]]; then
     pass show -c "$password_file" 2>/dev/null
 else
-    st -c 'term-float' -T 'pass pin entry' -g 68x13 -e pass show -c "$password_file" 2>/dev/null && pass show -c "$password_file" 2>/dev/nul
+    st -c 'term-float' -T 'pass pin entry' -g 68x13 -e pass show -c "$password_file" 2>/dev/null && pass show -c "$password_file" 2>/dev/null
 fi
