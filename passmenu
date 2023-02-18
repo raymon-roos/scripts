@@ -2,17 +2,10 @@
 
 shopt -s nullglob globstar
 
-typeit=0
-if [[ $1 == "--type" ]]; then
-	typeit=1
-	shift
-fi
-
 if [[ -n $WAYLAND_DISPLAY ]]; then
-	dmenu=dmenu-wl xdotool="ydotool type --file -"
+	dmenu='dmenu-wl'
 elif [[ -n $DISPLAY ]]; then
-	dmenu=dmenu
-	xdotool="xdotool type --clearmodifiers --file -"
+	dmenu='dmenu'
 else
 	echo "Error: No Wayland or X11 display detected" >&2
 	exit 1
@@ -23,19 +16,15 @@ password_files=( "$prefix"/**/*.gpg )
 password_files=( "${password_files[@]#"$prefix"/}" )
 password_files=( "${password_files[@]%.gpg}" )
 
-password=$(printf '%s\n' "${password_files[@]}" | "$dmenu" "$@")
+password_file=$(printf '%s\n' "${password_files[@]}" | "$dmenu" "$@")
 
-gpg_cache=$(gpg-connect-agent 'keyinfo --list' /bye 2>/dev/null | awk 'BEGIN{CACHED=0} /^S/ {if($7==1){CACHED=1}}   END{if($0!=""){print CACHED} else {print "none"}}')
 
-[[ -n $password ]] || exit
+[[ -n $password_file ]] || exit
 
-if [[ $gpg_cache == 1 ]]; then
-    if [[ $typeit -eq 0 ]]; then
-        pass show -c "$password" 2>/dev/null
-    else
-        pass show "$password" | { IFS= read -r pass; printf %s "$pass"; } | "$xdotool"
-    fi
+gpg_is_cached=$(gpg-connect-agent 'keyinfo --list' /bye 2>/dev/null | awk '{if($7==1){print 1}}')
+
+if [[ $gpg_is_cached == 1 ]]; then
+    pass show -c "$password_file" 2>/dev/null
 else
-    st -e pass show -c "$password" 2>/dev/null
-    pass show -c "$password" 2>/dev/null
+    st -c 'term-float' -T 'pass pin entry' -g 68x13 -e pass show -c "$password_file" 2>/dev/null && pass show -c "$password_file" 2>/dev/nul
 fi
