@@ -16,8 +16,7 @@ password_files=( "$prefix"/**/*.gpg )
 password_files=( "${password_files[@]#"$prefix"/}" )
 password_files=( "${password_files[@]%.gpg}" )
 
-password_file=$(printf '%s\n' "${password_files[@]}" | "$dmenu" "$@")
-
+password_file=$(printf '%s\n' "${password_files[@]}" | "$dmenu" -c -wm "$@")
 
 [[ -n $password_file ]] || exit
 
