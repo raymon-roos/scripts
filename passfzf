@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+set -o errexit  # abort on nonzero exitstatus
+set -o nounset  # abort on unbound variable
+set -o pipefail # don't hide errors within pipes
+
+password_dir="${PASSWORD_STORE_DIR:-$HOME/.password-store}"
+clip_time="${PASSWORD_STORE_CLIP_TIME:-45}"
+
+picker_prog=(fzf --no-preview --border=rounded --no-multi)
+
+passfile="$(
+	fd --base-directory="$password_dir" -tf -e gpg '.' |
+		"${picker_prog[@]}" |
+		cut -d'.' -f1
+)"
+
+if [ "$passfile" = "" ]; then
+	printf '%s\n' 'No password file found'
+	exit 1
+fi
+
+field_name=$(
+	cat <<EOF | "${picker_prog[@]}"
+password
+username
+email
+app password
+URL
+cancel
+EOF
+)
+
+case "$field_name" in
+"password")
+	pass show -c "$passfile" 2>/dev/null
+	exit 0
+	;;
+"cancel")
+	exit 0
+	;;
+*)
+	secret="$(
+		pass "$passfile" |
+			awk -F ': ' -v field="$field_name" \
+				'BEGIN {IGNORECASE = 1} $1 == field { print $2 }'
+	)"
+	;;
+esac
+
+if [ "$secret" = "" ]; then
+	printf '%s\n' 'Chosen field not present in password file'
+	exit 1
+fi
+
+sleep_process_title="passfzf sleep"
+pkill -f "^$sleep_process_title" 2>/dev/null && sleep 0.5
+
+printf '%s' "$secret" | xclip -r -selection 'clipboard' &&
+	(
+		(exec -a "$sleep_process_title" bash <<<"trap 'kill %1' TERM; sleep '$clip_time' & wait")
+		xclip -selection 'clipboard' -i /dev/null
+	) >/dev/null 2>&1 &
+disown
+
+printf '%s\n' "$field_name copied to clipboard. Will clear after $clip_time seconds"
