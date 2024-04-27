@@ -1,6 +1,5 @@
 #!/bin/bash
 # script to reconnect on-demand to two of my most often used wifi networks
 
-con_ctl='/bin/connmanctl'
-$con_ctl scan wifi > /dev/null && $con_ctl services | awk '/H369AC|TNW West Guests/ { print $NF }' | xargs connmanctl connect
+connmanctl scan wifi > /dev/null && connmanctl services | awk '/H369AC|TNW West Guests/ { print $NF }' | xargs connmanctl connect
 
