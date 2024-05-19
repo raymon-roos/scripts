@@ -15,7 +15,7 @@ passfile="$(
 		cut -d'.' -f1
 )"
 
-if [ "$passfile" = "" ]; then
+if [[ -z "$passfile" ]]; then
 	printf '%s\n' 'No password file found'
 	exit 1
 fi
@@ -30,6 +30,8 @@ URL
 cancel
 EOF
 )
+
+keychain --dir "$XDG_STATE_HOME/keychain" --quiet --eval --agents 'gpg' 'secretray'
 
 case "$field_name" in
 "password")
@@ -48,7 +50,7 @@ case "$field_name" in
 	;;
 esac
 
-if [ "$secret" = "" ]; then
+if [[ -z "$secret" ]]; then
 	printf '%s\n' 'Chosen field not present in password file'
 	exit 1
 fi
