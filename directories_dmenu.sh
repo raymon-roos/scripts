@@ -17,6 +17,6 @@ files/zettelkasten
 EOF
 )"
 
-[[ -z "$dir" ]] && exit
-
-[[ -d "$HOME/$dir" ]] && exec st -e bash -ic "n $HOME/$dir; exec bash"
+if [[ -n "$dir" && -d "$HOME/$dir" ]]; then
+	exec st -e bash -ic "n $HOME/$dir; exec bash"
+fi
