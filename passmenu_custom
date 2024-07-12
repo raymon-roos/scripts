@@ -1,63 +1,55 @@
 #!/usr/bin/env bash
 
-set -o errexit  # abort on nonzero exit status
-set -o pipefail # don't hide errors within pipes
+set -o errexit
+set -o pipefail
 
 shopt -s nullglob globstar
 
 clip_time="${PASSWORD_STORE_CLIP_TIME:-45}"
-
-if [[ -n $WAYLAND_DISPLAY ]]; then
-	dmenu='dmenu-wl'
-elif [[ -n $DISPLAY ]]; then
-	dmenu='dmenu'
-else
-	echo "Error: No Wayland or X11 display detected" >&2
-	exit 1
-fi
+field_delimiter="${PASSWORD_STORE_FIELD_DELIMITER:-: }"
 
 prefix=${PASSWORD_STORE_DIR-~/.password-store}
 password_files=("$prefix"/**/*.gpg)
 password_files=("${password_files[@]#"$prefix"/}")
 password_files=("${password_files[@]%.gpg}")
 
-password_file=$(printf '%s\n' "${password_files[@]}" | "$dmenu" -c "$@")
+password_file="$(printf '%s\n' "${password_files[@]}" | dmenu -c)"
+
+shopt -u nullglob globstar
 
 [[ -n $password_file ]] || exit
 
-field_name=$(
-	cat <<EOF | "$dmenu" -c
-password
-username
-email
-app password
-URL
-cancel
-EOF
-)
+eval "$(keychain --dir "$XDG_STATE_HOME/keychain" --quiet --noask --eval --agents 'gpg' 'secretray')" >/dev/null 2>&1
 
-[[ $field_name == 'cancel' ]] && exit
-
-eval "$(keychain --dir "$XDG_STATE_HOME/keychain" --quiet --noask --eval --agents 'gpg' 'secretray')"
-
+# Hack to make sure gpg private key is unlocked, I don't have a GUI pinentry program installed.
 gpg_is_cached="$(
-	gpg-connect-agent 'keyinfo --list' /bye 2>/dev/null | awk '{ if ($7==1) { print 1 } }'
+	gpg-connect-agent 'keyinfo 165B173249D839B10FE9459885514D6BD303BE62' /bye 2>/dev/null | awk 'NR == 1 { if ($7==1) { print 1 } }'
 )"
 
 if [[ $gpg_is_cached -ne 1 ]]; then
-	st -c 'term-float' -T 'pass pin entry' -g 68x13 -e pass -c "$password_file" 2>/dev/null
+	st -c 'term-float' -T 'pass pin entry' -g 68x13 -e pass ls "$password_file" >/dev/null 2>&1
 fi
 
-if [[ $field_name == 'password' ]]; then
-	pass -c "$password_file" 2>/dev/null
-	exit
-fi
+secret="$(pass ls "$password_file")"
 
-secret="$(
-	pass "$password_file" |
-		awk -F ': ' -v field="$field_name" \
-			'BEGIN {IGNORECASE = 1} $1 == field { print $2 }'
+field_name="$(
+	cat <<EOF | dmenu -c
+password
+$(awk -F "$field_delimiter" 'NR > 1 { print $1 }' <<<"$secret")
+cancel
+EOF
 )"
+
+case "$field_name" in
+'cancel' | '') exit 0 ;;
+'password') secret="$(head -n1 <<<"$secret")" ;;
+*)
+	secret="$(
+		awk -F "$field_delimiter" -v field="$field_name" \
+			'BEGIN {IGNORECASE = 1} NR > 1 { if ($1 == field) { print $2 } }' <<<"$secret"
+	)"
+	;;
+esac
 
 [[ -n $secret ]] || exit
 
