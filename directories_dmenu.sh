@@ -3,16 +3,17 @@
 dir="$(
 	cat <<EOF | dmenu -c
 projects
-projects/scripts
-projects/suckless
+projects/personal/scripts
 .xdg/config
 .xdg/config/nvim
 .xdg/config/neomutt
 .xdg/local
 files
-files/bit-academy
+projects/bit-academy
+files/finance/hledger
 files/documents
 files/downloads
+scratch
 files/zettelkasten
 EOF
 )"
