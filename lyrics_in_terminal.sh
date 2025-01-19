@@ -8,6 +8,12 @@ tags="$(cmus-remote -Q)"
 
 artist="$(awk -F 'tag artist ' '/artist/ {printf $2}' <<<"$tags")"
 title="$(awk -F 'tag title ' '/title/ {printf $2}' <<<"$tags")"
+genre="$(awk -F 'tag genre  ' '/genre/ {printf tolower($2)}' <<<"$tags")"
+
+if [[ "$genre" =~ instrumental|ambient ]]; then
+    printf '%s\n' 'instrumental track'
+    exit 0
+fi
 
 playing="$(awk -F 'status ' '/status/ {printf $2}' <<<"$tags")"
 continue="$(awk -F 'set continue ' '/continue/ {print $2}' <<<"$tags")"
