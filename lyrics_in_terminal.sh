@@ -7,6 +7,7 @@ set -o pipefail
 tags="$(cmus-remote -Q)"
 
 artist="$(awk -F 'tag artist ' '/artist/ {printf $2}' <<<"$tags")"
+artist=${artist:-"$(awk -F 'tag albumartist ' '/albumartist/ {printf $2}' <<<"$tags")"}
 title="$(awk -F 'tag title ' '/title/ {printf $2}' <<<"$tags")"
 genre="$(awk -F 'tag genre  ' '/genre/ {printf tolower($2)}' <<<"$tags")"
 
