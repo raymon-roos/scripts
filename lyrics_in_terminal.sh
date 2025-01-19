@@ -25,19 +25,19 @@ remaining=$((duration - position + 3))
 
 printf '\n%s\n\n' "$artist - $title"
 
-file="$(fd -Fi --max-results 1 "$artist - $title" ~/files/music/lyrics/)"
+file="$(fd -Fi --max-results 1 "$artist - $title" "$HOME/files/music/lyrics/")"
 
 if [[ -f "$file" && -r "$file" ]]; then
-	echo 'local lyric file found'
-	cat "$file"
+    printf '%s\n\n' 'local lyric file found'
+    cat "$file"
 else
-	printf '%s\n' 'no local lyric file found - dowloading from genius.com'
+    printf '%s\n' 'no local lyric file found - dowloading from genius.com'
 
-	lyrics="$(php "$HOME/projects/personal/lyrical-php/src/index.php" --artist "$artist" --title "$title")"
-	printf '%s\n' "$lyrics" | tee "$HOME/files/music/lyrics/$artist - $title.txt"
+    lyrics="$("$HOME/projects/personal/rust/lyrical/target/release/lyrical-rs" "$artist" "$title")"
+    printf '%s\n' "$lyrics" | tee "$HOME/files/music/lyrics/${artist//\//_} - ${title//\//_}.txt"
 fi
 
 if [[ "$playing" == "playing" && "$continue" == "true" ]]; then
-	sleep "${remaining}s"
-	exec lyrics_in_terminal.sh
+    sleep "${remaining}s"
+    exec "$0"
 fi
