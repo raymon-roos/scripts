@@ -21,7 +21,7 @@ continue="$(awk -F 'set continue ' '/continue/ {print $2}' <<<"$tags")"
 
 duration="$(awk -F 'duration ' '/duration/ {print $2}' <<<"$tags")"
 position="$(awk -F 'position ' '/position/ {print $2}' <<<"$tags")"
-remaining=$((duration - position + 5))
+remaining=$((duration - position + 3))
 
 printf '\n%s\n\n' "$artist - $title"
 
