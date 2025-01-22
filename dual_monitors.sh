@@ -1,11 +1,20 @@
 #!/bin/bash
-intern=eDP1
-extern=HDMI2
 
-if xrandr | grep "$extern disconnected"; then
-	xrandr --output "$extern" --off --output "$intern" --auto
-else
-	xrandr --output "$intern" --primary --auto --output "$extern" --mode 1280x1024 --left-of "$intern" 
+monitor="$(xrandr | awk '/(\<connected\>)/ && !/eDP1/ {print $1}')"
+
+if [[ "$(wc -l <<<"$monitor")" -gt 1 ]]; then
+    monitor="$(dmenu -c -g 1 <<<"$monitor")"
 fi
 
-# For use with my monitors at home
+direction="$(cat <<EOF |
+same-as
+left-of
+right-of
+above
+below
+EOF
+    dmenu -c -g 1)"
+
+if [[ "$monitor" && "$direction" ]]; then
+    xrandr --output 'eDP1' --primary --auto --output "$monitor" --auto "--$direction" 'eDP1'
+fi
