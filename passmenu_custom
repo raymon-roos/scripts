@@ -21,19 +21,10 @@ shopt -u nullglob globstar
 
 eval "$(keychain --dir "$XDG_STATE_HOME/keychain" --quiet --noask --eval --agents 'gpg' 'secretray')" >/dev/null 2>&1
 
-# Hack to make sure gpg private key is unlocked, I don't have a GUI pinentry program installed.
-gpg_is_cached="$(
-	gpg-connect-agent 'keyinfo 165B173249D839B10FE9459885514D6BD303BE62' /bye 2>/dev/null | awk 'NR == 1 { if ($7==1) { print 1 } }'
-)"
-
-if [[ $gpg_is_cached -ne 1 ]]; then
-	st -c 'term-float' -T 'pass pin entry' -g 68x13 -e pass ls "$password_file" >/dev/null 2>&1
-fi
-
 secret="$(pass ls "$password_file")"
 
 field_name="$(
-	cat <<EOF | dmenu -c
+    cat <<EOF | dmenu -c
 password
 $(awk -F "$field_delimiter" 'NR > 1 { print $1 }' <<<"$secret")
 cancel
@@ -44,11 +35,11 @@ case "$field_name" in
 'cancel' | '') exit 0 ;;
 'password') secret="$(head -n1 <<<"$secret")" ;;
 *)
-	secret="$(
-		awk -F "$field_delimiter" -v field="$field_name" \
-			'BEGIN {IGNORECASE = 1} NR > 1 { if ($1 == field) { print $2 } }' <<<"$secret"
-	)"
-	;;
+    secret="$(
+        awk -F "$field_delimiter" -v field="$field_name" \
+            'BEGIN {IGNORECASE = 1} NR > 1 { if ($1 == field) { print $2 } }' <<<"$secret"
+    )"
+    ;;
 esac
 
 [[ -n $secret ]] || exit
@@ -56,8 +47,8 @@ esac
 sleep_process_title='passmenu sleep'
 pkill -x "$sleep_process_title" 2>/dev/null && sleep 0.5
 printf '%s' "$secret" | xclip -r -selection 'clipboard' &&
-	(
-		(exec -a "$sleep_process_title" bash <<<"trap 'kill %1' TERM; sleep '$clip_time' & wait")
-		xclip -selection 'clipboard' -i /dev/null
-	) >/dev/null 2>&1 &
+    (
+        (exec -a "$sleep_process_title" bash <<<"trap 'kill %1' TERM; sleep '$clip_time' & wait")
+        xclip -selection 'clipboard' -i /dev/null
+    ) >/dev/null 2>&1 &
 disown
