@@ -2,9 +2,11 @@
 
 monitor="$(xrandr | awk '/(\<connected\>)/ && !/eDP1/ {print $1}')"
 
-if [[ "$(wc -l <<<"$monitor")" -gt 1 ]]; then
-    monitor="$(dmenu -c -g 1 <<<"$monitor")"
+if [[ "$(wc -l <<<"$monitor")" -eq 1 ]]; then
+    exec xrandr --auto
 fi
+
+monitor="$(dmenu -c -g 1 <<<"$monitor")"
 
 direction="$(cat <<EOF |
 same-as
