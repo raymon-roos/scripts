@@ -2,7 +2,7 @@
 
 monitor="$(xrandr | awk '/(\<connected\>)/ && !/eDP1/ {print $1}')"
 
-if [[ "$(wc -l <<<"$monitor")" -eq 1 ]]; then
+if [[ "$(wc -l <<<"$monitor")" -eq 0 ]]; then
     exec xrandr --auto
 fi
 
