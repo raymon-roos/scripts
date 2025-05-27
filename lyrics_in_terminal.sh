@@ -11,8 +11,12 @@ artist=${artist:-"$(awk -F 'tag albumartist ' '/albumartist/ {printf $2}' <<<"$t
 title="$(awk -F 'tag title ' '/title/ {printf $2}' <<<"$tags")"
 genre="$(awk -F 'tag genre  ' '/genre/ {printf tolower($2)}' <<<"$tags")"
 
-if [[ "$genre" =~ instrumental|ambient ]]; then
-    printf '%s\n' 'instrumental track'
+if [[ -z $artist ]]; then
+    printf '%s\n' 'warning: missing [artist]. Is the tag correctly set?'
+fi
+
+if [[ -z $title ]]; then
+    printf '%s\n' 'error: missing [title]. Is the tag correctly set?'
     exit 0
 fi
 
@@ -25,16 +29,21 @@ remaining=$((duration - position + 3))
 
 printf '\n%s\n\n' "$artist - $title"
 
-file="$(fd -Fi --max-results 1 "$artist - $title" "$HOME/files/music/lyrics/")"
+if [[ "$genre" =~ instrumental|ambient ]]; then
+    printf '%s\n' 'instrumental track'
+    sleep "${remaining}s"
+    exec "$0"
+fi
 
-if [[ -f "$file" && -r "$file" ]]; then
-    printf '%s\n\n' 'local lyric file found'
-    cat "$file"
+lyric_file="$HOME/files/music/lyrics/${artist//\//_} - ${title//\//_}.txt"
+
+if [[ -f "$lyric_file" && -r "$lyric_file" ]]; then
+    cat "$lyric_file"
 else
     printf '%s\n' 'no local lyric file found - dowloading from genius.com'
 
-    lyrics="$("$HOME/projects/personal/rust/lyrical/target/release/lyrical-rs" "$artist" "$title")"
-    printf '%s\n' "$lyrics" | tee "$HOME/files/music/lyrics/${artist//\//_} - ${title//\//_}.txt"
+    lyrics="$(lyrical-rs --artist "$artist" --title "$title")"
+    printf '%s\n' "$lyrics" | tee "$lyric_file"
 fi
 
 if [[ "$playing" == "playing" && "$continue" == "true" ]]; then
